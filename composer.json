@@ -1,0 +1,21 @@
+{
+    "name": "dub2000/http-log",
+    "description": "Log for Illuminate\\Support\\Facades\\Http",
+    "type": "project",
+    "license": "MIT",
+
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Dub2000\\HttpLog\\Providers\\HttpLogServiceProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "Ivan Dubatov",
+            "email": "dubatov.ivan@gmail.com"
+        }
+    ],
+    "require": {}
+}
