@@ -4,6 +4,11 @@
     "type": "project",
     "license": "MIT",
 
+    "autoload": {
+        "psr-4": {
+            "Simplexi\\Greetr\\": "src/"
+        }
+    },
     "extra": {
         "laravel": {
             "providers": [
