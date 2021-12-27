@@ -6,6 +6,8 @@ namespace Dub2000\HttpLog\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Dub2000\HttpLog\HttpQuery;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 
 class HttpLogController extends Controller
 {
@@ -20,6 +22,13 @@ class HttpLogController extends Controller
         return view('http-log::index', compact('logs'));
 
     }
+
+    public function delete()
+    {
+        DB::table('http_log')->delete();
+        return redirect()->back();
+    }
+
 
     /**
      * Show the form for creating a new resource.
