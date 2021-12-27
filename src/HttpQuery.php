@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 
 class HttpQuery
 {
+    public static $group = null;
     /**
      * @return \Illuminate\Support\Collection
      */
@@ -42,7 +43,7 @@ class HttpQuery
 
         $http_log_id = DB::table('http_log')->insertGetId([
             'method' => mb_strtoupper($method),
-            'group' => $group,
+            'group' => $group ?? self::$group,
             'created_at' => date('Y-m-d H:i:s'),
             'url' => $url,
             'payload' => $data ? json_encode($data) : null,
