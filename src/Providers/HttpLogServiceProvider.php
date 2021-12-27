@@ -13,7 +13,9 @@ class HttpLogServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->mergeConfigFrom(
+            __DIR__.'/../../config/http-log.php', 'http-log'
+        );
     }
 
     /**
@@ -34,6 +36,7 @@ class HttpLogServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../config/http-log.php' => config_path('http-log.php')
         ], 'config');
+        $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
     }
 
     public function loadRoutes(){

@@ -36,7 +36,7 @@ class HttpQuery
 
         $beginTime = microtime(true);
 
-        if ($method == 'get') {
+        if (!in_array(mb_strtoupper($method), config('http-log.methods-to-log'))) {
             return Http::withHeaders($headers)->get($url);
         }
 
