@@ -16,7 +16,7 @@ class HttpQuery
         return DB::table('http_log')->select()->get();
     }
 
-    public static function run(string $method, string $url, array $params = [], array $headers = [], $data = null): Response
+    public static function run(string $method, string $url, array $params = [], array $headers = [], $data = null, $group = null): Response
     {
         $method = mb_strtolower($method);
 
@@ -42,6 +42,7 @@ class HttpQuery
 
         $http_log_id = DB::table('http_log')->insertGetId([
             'method' => mb_strtoupper($method),
+            'group' => $group,
             'created_at' => date('Y-m-d H:i:s'),
             'url' => $url,
             'payload' => $data ? json_encode($data) : null,
@@ -61,11 +62,11 @@ class HttpQuery
         return $response;
     }
 
-    public static function json(string $method, string $url, array $params = [], array $headers = [], $data = null): Response
+    public static function json(string $method, string $url, array $params = [], array $headers = [], $data = null, $group = null): Response
     {
         $headers['Content-Type'] = 'application/json';
         $headers['Accept'] = 'application/json';
 
-        return self::run($method, $url, $params, $headers, $data);
+        return self::run($method, $url, $params, $headers, $data, $group);
     }
 }
