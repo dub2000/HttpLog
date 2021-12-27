@@ -65,7 +65,7 @@ class HttpQuery
     public static function json(string $method, string $url, array $params = [], array $headers = [], $data = null, $group = null): Response
     {
         $headers['Content-Type'] = 'application/json';
-        $headers['Accept'] = 'application/json';
+//        $headers['Accept'] = 'application/json';
 
         return self::run($method, $url, $params, $headers, $data, $group);
     }
