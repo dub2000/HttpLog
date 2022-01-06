@@ -12,7 +12,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Dub2000\\HttpLog\\Providers\\HttpLogServiceProvider"
+              "TableServiceProvider"
             ]
         }
     },

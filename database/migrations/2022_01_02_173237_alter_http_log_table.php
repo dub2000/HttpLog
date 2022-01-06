@@ -13,8 +13,8 @@ class AlterHttpLogTable extends Migration
      */
     public function up()
     {
-        Schema::table('http_log', function (Blueprint $table) {
-            $table->rename('http_logs');
+        Schema::table('http_logs', function (Blueprint $table) {
+            $table->text('response_headers')->after('response_content')->nullable();
         });
     }
 
@@ -26,7 +26,7 @@ class AlterHttpLogTable extends Migration
     public function down()
     {
         Schema::table('http_logs', function (Blueprint $table) {
-            $table->rename('http_log');
+            $table->dropColumn('response_headers');
         });
     }
 }

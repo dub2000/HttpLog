@@ -4,7 +4,7 @@ namespace Dub2000\HttpLog\Http\Controllers;
 
 
 use App\Http\Controllers\Controller;
-use Dub2000\HttpLog\HttpQuery;
+use Dub2000\HttpLog\Models\HttpLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -18,14 +18,14 @@ class HttpLogController extends Controller
      */
     public function index()
     {
-        $logs = HttpQuery::logs()->sortByDesc('id')->all();
+        $logs = HttpLog::logs()->sortByDesc('id')->all();
         return view('http-log::index', compact('logs'));
 
     }
 
     public function delete()
     {
-        DB::table('http_log')->delete();
+        DB::table('http_logs')->delete();
         return redirect()->back();
     }
 
