@@ -13,7 +13,7 @@ class CreateHttpLogTable extends Migration
      */
     public function up()
     {
-        Schema::create('http_log', function (Blueprint $table) {
+        Schema::create('http_logs', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->text('method');
@@ -22,7 +22,9 @@ class CreateHttpLogTable extends Migration
             $table->text('headers')->nullable();
             $table->text('response_code')->nullable();
             $table->text('response_content')->nullable();
+            $table->text('response_headers')->after('response_content')->nullable();
             $table->float('duration')->nullable();
+            $table->text('group')->after('url')->nullable();
         });
     }
 
