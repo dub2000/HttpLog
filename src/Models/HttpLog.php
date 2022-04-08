@@ -47,7 +47,13 @@ class HttpLog extends Model
             'headers' => json_encode($headers),
         ]);
 
-        $response = Http::withHeaders($headers)->$method($url, $data);
+        if (is_array($data))
+            $response = Http::withHeaders($headers)->$method($url, $data);
+        elseif ($data)
+            $response = Http::withHeaders($headers)->withBody($data, '')->$method($url);
+        else
+            $response = Http::withHeaders($headers)->$method($url);
+
 
         $endTime = microtime(true);
         DB::table('http_logs')->where('id', $http_log_id)->update([
