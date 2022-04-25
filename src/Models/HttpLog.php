@@ -12,6 +12,8 @@ class HttpLog extends Model
 {
     use HasFactory;
 
+    protected $table = 'http_log';
+
     public static $group = null;
 
     public static function run(string $method, string $url, array $params = [], array $headers = [], $data = null, $group = null): Response
