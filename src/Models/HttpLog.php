@@ -38,7 +38,7 @@ class HttpLog extends Model
             return Http::withHeaders($headers)->get($url);
         }
 
-        $http_log_id = DB::table('http_logs')->insertGetId([
+        $http_log_id = DB::table('http_log')->insertGetId([
             'method' => mb_strtoupper($method),
             'group' => $group ?? self::$group,
             'created_at' => date('Y-m-d H:i:s'),
@@ -56,7 +56,7 @@ class HttpLog extends Model
 
 
         $endTime = microtime(true);
-        DB::table('http_logs')->where('id', $http_log_id)->update([
+        DB::table('http_log')->where('id', $http_log_id)->update([
             'response_code' => $response->status(),
             'response_content' => json_encode($response->body()),
             'response_headers' => json_encode($response->headers()),

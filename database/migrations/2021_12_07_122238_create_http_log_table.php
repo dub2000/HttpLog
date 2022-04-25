@@ -13,7 +13,7 @@ class CreateHttpLogTable extends Migration
      */
     public function up()
     {
-        Schema::create('http_logs', function (Blueprint $table) {
+        Schema::create('http_log', function (Blueprint $table) {
 
             $table->id();
             $table->timestamps();
@@ -36,6 +36,6 @@ class CreateHttpLogTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('http_logs');
+        Schema::dropIfExists('http_log');
     }
 }

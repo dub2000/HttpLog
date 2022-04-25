@@ -25,7 +25,7 @@ class HttpLogController extends Controller
 
     public function delete()
     {
-        DB::table('http_logs')->delete();
+        DB::table('http_log')->delete();
         return redirect()->back();
     }
 
