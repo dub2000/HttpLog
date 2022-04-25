@@ -36,6 +36,6 @@ class CreateHttpLogTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('http_log');
+        Schema::dropIfExists('http_logs');
     }
 }
