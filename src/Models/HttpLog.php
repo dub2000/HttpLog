@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class HttpLog extends Model
 {
@@ -15,6 +17,32 @@ class HttpLog extends Model
     protected $table = 'http_log';
 
     public static $group = null;
+
+    private static function _writeToCurrentDatabase(array $logData): void
+    {
+        $row = ['updated_at' => 'now()'];
+        foreach ($logData as $k => $v)
+            $row[$k] = (is_array($v) || is_object($v)) ? json_encode($v) : $v;
+
+        DB::table('http_log')->insert($row);
+    }
+
+    private static function _writeToFilesystem(array $logData): void
+    {
+        //umask(0);
+        $dir = storage_path() . '/logs/http';
+        if (!file_exists($dir))
+            mkdir($dir);
+        $group = $logData['group'] ?: '_';
+
+        $path = $dir . '/' . $group . '.log';
+        $fileExists = file_exists($path);
+
+        file_put_contents($path, json_encode($logData) . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+        if (!$fileExists)
+            chmod($path, 0666);
+    }
 
     public static function run(string $method, string $url, array $params = [], array $headers = [], $data = null, $group = null): Response
     {
@@ -36,18 +64,8 @@ class HttpLog extends Model
 
         $beginTime = microtime(true);
 
-        if (!in_array(mb_strtoupper($method), config('http-log.methods-to-log'))) {
-            return Http::withHeaders($headers)->get($url);
-        }
-
-        $http_log_id = DB::table('http_log')->insertGetId([
-            'method' => mb_strtoupper($method),
-            'group' => $group ?? self::$group,
-            'created_at' => date('Y-m-d H:i:s'),
-            'url' => $url,
-            'payload' => $data ? json_encode($data) : null,
-            'headers' => json_encode($headers),
-        ]);
+        $config = config('http-log');
+        $toLog = in_array(mb_strtoupper($method), $config['methods-to-log']);
 
         if (is_array($data))
             $response = Http::withHeaders($headers)->$method($url, $data);
@@ -56,15 +74,30 @@ class HttpLog extends Model
         else
             $response = Http::withHeaders($headers)->$method($url);
 
-
         $endTime = microtime(true);
-        DB::table('http_log')->where('id', $http_log_id)->update([
-            'response_code' => $response->status(),
-            'response_content' => json_encode($response->body()),
-            'response_headers' => json_encode($response->headers()),
-            'updated_at' => 'now()',
-            'duration' => number_format($endTime - $beginTime, 3),
-        ]);
+
+        if ($toLog) {
+            $logData = [
+                'group' => $group ?? self::$group,
+                'created_at' => date('Y-m-d H:i:s'),
+                'method' => mb_strtoupper($method),
+                'url' => $url,
+                'payload' => $data,
+                'headers' => $headers,
+                'response_code' => $response->status(),
+                'response_content' => $response->body(),
+                'response_headers' => $response->headers(),
+                'duration' => number_format($endTime - $beginTime, 3),
+            ];
+
+            if (isset($config['storage']) && $config['storage'] == 'filesystem')
+                self::_writeToFilesystem($logData);
+
+            if (!isset($config['storage']) || $config['storage'] == 'database')
+                self::_writeToCurrentDatabase($logData);
+
+        }
+
         return $response;
     }
 
@@ -80,14 +113,17 @@ class HttpLog extends Model
     {
         return json_decode($this->attributes['payload']);
     }
+
     public function getHeadersAttribute()
     {
         return json_decode($this->attributes['headers']);
     }
+
     public function getResponseContentAttribute()
     {
         return json_decode($this->attributes['response_content']);
     }
+
     public function getResponseHeadersAttribute()
     {
         return json_decode($this->attributes['response_headers']);
