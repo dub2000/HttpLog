@@ -44,6 +44,132 @@ class HttpLog extends Model
             chmod($path, 0666);
     }
 
+    private static function _readFromFilesystem(array $params): ?array
+    {
+        $filter = $params['filter'] ?? [];
+        $sortColumn = $params['sort']['property'] ?? 'id';
+        $sortDirection = $params['sort']['direction'] ?? 'desc';
+        $group = $params['group'] ?? '_';
+        $page = $params['pagination']['page'] ?? 0;
+        $pageSize = $params['pagination']['page-size'] ?? 10;
+
+        if (!isset($filter['date']) && $pageSize != 1)
+            return null;
+
+        $path = storage_path() . '/logs/http/' . $group . '.log';
+        if (!file_exists($path))
+            return [];
+
+        $fp = @fopen($path, "r");
+        if (!$fp)
+            return null;
+        $data = [];
+
+        $i = 0;
+        while (($buffer = fgets($fp)) !== false) {
+            $i++;
+            $row = json_decode($buffer, true);
+            if ($row['group'] != $group)
+                continue;
+            if (isset($filter['date']) && ($row['created_at'] < ($filter['date'] . ' 00:00:00') || $row['created_at'] > ($filter['date'] . ' 23:59:59')))
+                continue;
+            if (isset($filter['method']) && ($filter['method'] && $row['method'] != $filter['method']))
+                continue;
+            $row['id'] = $group . ':' . $i;
+            $row['resource'] = explode('?', $row['url'])[0];
+
+            if ($pageSize > 1) { // Для таблицы это лишние данные
+                unset($row['url']);
+                unset($row['payload']);
+                unset($row['headers']);
+                unset($row['response_content']);
+                unset($row['response_headers']);
+            }
+
+            $data[] = $row;
+        }
+
+        fclose($fp);
+
+        // Сортировка TODO: сделать по любому полю. Сейчас только по id (для файлов признак прямой последовательности без самого значения)
+        if ($sortColumn == 'id' && $sortDirection == 'desc')
+            $data = array_reverse($data);
+
+        // Пагинация
+        $data = array_slice($data, offset: $page * $pageSize, length: $pageSize);
+        return $data;
+    }
+
+    private static function _clearFromFilesystem(string $group): void
+    {
+        $path = storage_path() . '/logs/http/' . $group . '.log';
+        if (file_exists($path))
+            unlink($path);
+    }
+
+    private static function _readFromCurrentDatabase(array $params): ?array
+    {
+        $filter = $params['filter'] ?? [];
+        $sortColumn = $params['sort']['property'] ?? 'id';
+        $sortDirection = $params['sort']['direction'] ?? 'desc';
+        if (!isset($filter['date']))
+            return null;
+
+        $begin = $filter['date'] . ' 00:00:00';
+        $end = $filter['date'] . ' 23:59:59';
+        $builder = HttpLog::query()
+            ->select()->orderBy($sortColumn, $sortDirection)
+            ->where('group', '=', $params['group'] ?? null)
+            ->where('created_at', '>', $begin)
+            ->where('created_at', '<', $end);
+        if ($filter['method'] ?? false)
+            $builder->where('method', '=', $filter['method']);
+
+        $items = $builder->paginate(perPage: 2, page: 1)->items();
+        $data = [];
+        foreach ($items as $item) {
+            $attributes = [];
+            foreach ($item->attributes as $k => $v) {
+                if ($k == 'updated_at')
+                    continue;
+                $_v = json_decode($v, true);
+                $attributes[$k] = $_v ?: $v;
+            }
+            $data[] = $attributes;
+        }
+        return $data;
+    }
+
+    private static function _clearFromCurrentDatabase(string $group): void
+    {
+        HttpLog::query()->where('group', '=', $group)
+            ->delete();
+    }
+
+
+
+    public static function clearLogData(string $group): void
+    {
+        $config = config('http-log');
+        if (isset($config['storage']) && $config['storage'] == 'filesystem')
+            self::_clearFromFilesystem($group);
+
+        if (!isset($config['storage']) || $config['storage'] == 'database')
+            self::_clearFromCurrentDatabase($group);
+    }
+
+    public static function getLogData(array $params): ?array
+    {
+        $config = config('http-log');
+        if (isset($config['storage']) && $config['storage'] == 'filesystem')
+            return self::_readFromFilesystem($params);
+
+        if (!isset($config['storage']) || $config['storage'] == 'database')
+            return self::_readFromCurrentDatabase($params);
+
+        return [];
+    }
+
     public static function run(string $method, string $url, array $params = [], array $headers = [], $data = null, $group = null): Response
     {
         $method = mb_strtolower($method);
