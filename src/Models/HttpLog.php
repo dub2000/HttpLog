@@ -73,7 +73,7 @@ class HttpLog extends Model
                 continue;
             if (isset($filter['date']) && ($row['created_at'] < ($filter['date'] . ' 00:00:00') || $row['created_at'] > ($filter['date'] . ' 23:59:59')))
                 continue;
-            if (isset($filter['method']) && ($filter['method'] && $row['method'] != $filter['method']))
+            if (isset($filter['method']) && ($filter['method'] && !in_array($row['method'], explode(',', $filter['method']))))
                 continue;
             $row['id'] = $group . ':' . $i;
             $row['resource'] = explode('?', $row['url'])[0];
@@ -123,7 +123,7 @@ class HttpLog extends Model
             ->where('created_at', '>', $begin)
             ->where('created_at', '<', $end);
         if ($filter['method'] ?? false)
-            $builder->where('method', '=', $filter['method']);
+            $builder->whereIn('method', explode(',', $filter['method']));
 
         $items = $builder->paginate(perPage: 2, page: 1)->items();
         $data = [];
