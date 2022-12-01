@@ -75,6 +75,9 @@ class HttpLog extends Model
                 continue;
             if (isset($filter['method']) && ($filter['method'] && !in_array($row['method'], explode(',', $filter['method']))))
                 continue;
+            if (isset($filter['mask']) && (mb_stripos($row['url'], $filter['mask']) === false))
+                continue;
+
             $row['id'] = $group . ':' . $i;
             $row['resource'] = explode('?', $row['url'])[0];
 
@@ -124,6 +127,8 @@ class HttpLog extends Model
             ->where('created_at', '<', $end);
         if ($filter['method'] ?? false)
             $builder->whereIn('method', explode(',', $filter['method']));
+        if ($filter['mask'] ?? false)
+            $builder->where('url', 'like', $filter['mask']);
 
         $items = $builder->paginate(perPage: 2, page: 1)->items();
         $data = [];
