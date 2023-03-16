@@ -5,6 +5,7 @@ namespace Dub2000\HttpLog\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -53,6 +54,9 @@ class HttpLog extends Model
         $page = $params['pagination']['page'] ?? 0;
         $pageSize = $params['pagination']['page-size'] ?? 10;
 
+        if (isset($filter['date']) && $filter['date'])
+            $filter['date'] = Carbon::parse($filter['date'])->setTimezone('+3')->format('Y-m-d');
+
         if (!isset($filter['date']) && $pageSize != 1)
             return null;
 
@@ -75,8 +79,15 @@ class HttpLog extends Model
                 continue;
             if (isset($filter['method']) && ($filter['method'] && !in_array($row['method'], explode(',', $filter['method']))))
                 continue;
-            if (isset($filter['mask']) && (mb_stripos($row['url'], $filter['mask']) === false))
-                continue;
+            if (isset($filter['mask'])) {
+                $inFilter = false;
+                if ($row['payload'] && (mb_stripos($row['payload'], $filter['mask']) !== false))
+                    $inFilter = true;
+                if (mb_stripos($row['url'], $filter['mask']) !== false)
+                    $inFilter = true;
+                if (!$inFilter)
+                    continue;
+            }
 
             $row['id'] = $group . ':' . $i;
             $row['resource'] = explode('?', $row['url'])[0];
@@ -127,8 +138,9 @@ class HttpLog extends Model
             ->where('created_at', '<', $end);
         if ($filter['method'] ?? false)
             $builder->whereIn('method', explode(',', $filter['method']));
-        if ($filter['mask'] ?? false)
+        if ($filter['mask'] ?? false) {
             $builder->where('url', 'like', $filter['mask']);
+        }
 
         $items = $builder->paginate(perPage: 2, page: 1)->items();
         $data = [];
