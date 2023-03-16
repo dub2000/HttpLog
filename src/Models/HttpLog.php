@@ -213,7 +213,7 @@ class HttpLog extends Model
         if (is_array($data))
             $response = Http::withHeaders($headers)->$method($url, $data);
         elseif ($data)
-            $response = Http::withHeaders($headers)->withBody($data, '')->$method($url);
+            $response = Http::withHeaders($headers)->withBody($data, $headers['Content-Type'] ?? 'application/json')->$method($url);
         else
             $response = Http::withHeaders($headers)->$method($url);
 
