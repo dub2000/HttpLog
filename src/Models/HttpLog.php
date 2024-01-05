@@ -45,17 +45,23 @@ class HttpLog extends Model
             chmod($path, 0666);
     }
 
+
     private static function _readFromFilesystem(array $params): ?array
     {
         $filter = $params['filter'] ?? [];
-        $sortColumn = $params['sort']['property'] ?? 'id';
+
+        $sortColumn =  $params['sort']['property'] ?? 'id';
+
         $sortDirection = $params['sort']['direction'] ?? 'desc';
+
         $group = $params['group'] ?? '_';
+
         $page = $params['pagination']['page'] ?? 0;
         $pageSize = $params['pagination']['page-size'] ?? 10;
 
         if (isset($filter['date']) && $filter['date'])
             $filter['date'] = Carbon::parse($filter['date'])->setTimezone('+3')->format('Y-m-d');
+
 
         if (!isset($filter['date']) && $pageSize != 1)
             return null;
@@ -88,6 +94,7 @@ class HttpLog extends Model
                 if (!$inFilter)
                     continue;
             }
+
 
             $row['id'] = $group . ':' . $i;
             $row['resource'] = explode('?', $row['url'])[0];
