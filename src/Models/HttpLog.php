@@ -63,6 +63,8 @@ class HttpLog extends Model
             $filter['date'] = Carbon::parse($filter['date'])->setTimezone('+3')->format('Y-m-d');
 
 
+
+
         if (!isset($filter['date']) && $pageSize != 1)
             return null;
 
