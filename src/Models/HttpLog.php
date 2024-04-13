@@ -83,7 +83,9 @@ class HttpLog extends Model
                 continue;
             if (isset($filter['mask'])) {
                 $inFilter = false;
-                if (isset($row['payload']) && trim($filter['mask']) && (mb_stripos($row['payload'], $filter['mask']) !== false))
+
+                $payloadStr = is_array($row['payload']) ? json_encode($row['payload']) : $row['payload'];
+                if (isset($row['payload']) && trim($filter['mask']) && (mb_stripos($payloadStr, $filter['mask']) !== false))
                     $inFilter = true;
 
                 if (mb_stripos($row['url'], $filter['mask']) !== false)
@@ -165,7 +167,6 @@ class HttpLog extends Model
         HttpLog::query()->where('group', '=', $group)
             ->delete();
     }
-
 
 
     public static function clearLogData(string $group): void
